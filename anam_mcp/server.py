@@ -314,14 +314,16 @@ async def search_avatars(
         # Filter by query and stock_only
         matches = []
         for item in items:
-            name = item.get("displayName", "")
-            variant = item.get("variantName", "")
+            name = item.get("displayName") or ""
+            variant = item.get("variantName") or ""
+            description = item.get("description") or ""
             is_stock = item.get("createdByOrganizationId") is None
 
             if stock_only and not is_stock:
                 continue
 
-            if fuzzy_match(query, name) or fuzzy_match(query, variant):
+            # Match on name, variant, or description
+            if fuzzy_match(query, name) or fuzzy_match(query, variant) or fuzzy_match(query, description):
                 matches.append(item)
 
         if not matches:
@@ -442,12 +444,14 @@ async def search_voices(
         # Filter
         matches = []
         for item in all_items:
-            name = item.get("displayName", item.get("name", ""))
-            item_country = item.get("country", "")
-            item_gender = item.get("gender", "")
-            description = item.get("description", "")
+            name = item.get("displayName") or item.get("name") or ""
+            item_country = item.get("country") or ""
+            item_gender = item.get("gender") or ""
+            description = item.get("description") or ""
 
+            # Fuzzy match on name and description
             name_match = not query or fuzzy_match(query, name) or fuzzy_match(query, description)
+            # Exact match on country/gender (case-insensitive)
             country_match = not country or item_country.upper() == country.upper()
             gender_match = not gender or item_gender.upper() == gender.upper()
 
