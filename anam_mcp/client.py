@@ -79,7 +79,11 @@ class AnamClient:
 
                 raise AnamAPIError(response.status_code, message, details)
 
-            return response.json()
+            # Ensure we always return a dict, even if API returns null/empty
+            result = response.json()
+            if result is None:
+                return {}
+            return result
 
     # ─────────────────────────────────────────────────────────────────────────────
     # Personas
