@@ -375,6 +375,115 @@ Or for Claude Code (`.mcp.json`):
 }
 ```
 
+## CI/CD: GitHub Actions for PyPI Publishing
+
+Set up automated publishing to PyPI when a new version tag is pushed.
+
+### Project Structure Addition
+
+```
+anam-mcp/
+├── .github/
+│   └── workflows/
+│       └── publish.yml    # PyPI publish on tagged releases
+├── anam_mcp/
+│   └── ...
+└── ...
+```
+
+### GitHub Actions Workflow
+
+Create `.github/workflows/publish.yml`:
+
+```yaml
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write  # Required for trusted publishing
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Build package
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Uses trusted publishing - no API token needed
+        # Configure at: https://pypi.org/manage/project/anam-mcp/settings/publishing/
+```
+
+### PyPI Trusted Publishing Setup
+
+1. Create a PyPI account at https://pypi.org
+2. Create the `anam-mcp` project (first publish can be manual or via token)
+3. Go to project settings → Publishing → Add a new publisher
+4. Configure trusted publisher:
+   - Owner: `anam-org`
+   - Repository: `anam-mcp`
+   - Workflow name: `publish.yml`
+   - Environment: `release`
+
+### Release Process
+
+1. Update version in `pyproject.toml`
+2. Commit the version bump
+3. Create and push a tag:
+   ```bash
+   git tag v0.1.0
+   git push origin v0.1.0
+   ```
+4. GitHub Actions automatically builds and publishes to PyPI
+
+### Optional: Add Version Validation
+
+Add a job to ensure the tag matches `pyproject.toml` version:
+
+```yaml
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate version
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          PKG_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "Tag version ($TAG_VERSION) does not match package version ($PKG_VERSION)"
+            exit 1
+          fi
+
+  publish:
+    needs: validate
+    # ... rest of publish job
+```
+
 ## Testing
 
 1. Create a test script that validates each tool works
