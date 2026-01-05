@@ -53,9 +53,18 @@ class AnamClient:
     # Personas
     # ─────────────────────────────────────────────────────────────────────────────
 
-    async def list_personas(self) -> list[dict[str, Any]]:
+    async def list_personas(
+        self,
+        page: int | None = None,
+        per_page: int | None = None,
+    ) -> dict[str, Any]:
         """List all personas in the account."""
-        return await self._request("GET", "/v1/personas")
+        params = {}
+        if page is not None:
+            params["page"] = page
+        if per_page is not None:
+            params["perPage"] = per_page
+        return await self._request("GET", "/v1/personas", params=params or None)
 
     async def get_persona(self, persona_id: str) -> dict[str, Any]:
         """Get a persona by ID."""
@@ -116,9 +125,18 @@ class AnamClient:
     # Avatars
     # ─────────────────────────────────────────────────────────────────────────────
 
-    async def list_avatars(self) -> list[dict[str, Any]]:
+    async def list_avatars(
+        self,
+        page: int | None = None,
+        per_page: int | None = None,
+    ) -> dict[str, Any]:
         """List all available avatars."""
-        return await self._request("GET", "/v1/avatars")
+        params = {}
+        if page is not None:
+            params["page"] = page
+        if per_page is not None:
+            params["perPage"] = per_page
+        return await self._request("GET", "/v1/avatars", params=params or None)
 
     async def create_avatar(
         self,
@@ -149,17 +167,35 @@ class AnamClient:
     # Voices
     # ─────────────────────────────────────────────────────────────────────────────
 
-    async def list_voices(self) -> list[dict[str, Any]]:
+    async def list_voices(
+        self,
+        page: int | None = None,
+        per_page: int | None = None,
+    ) -> dict[str, Any]:
         """List all available voices."""
-        return await self._request("GET", "/v1/voices")
+        params = {}
+        if page is not None:
+            params["page"] = page
+        if per_page is not None:
+            params["perPage"] = per_page
+        return await self._request("GET", "/v1/voices", params=params or None)
 
     # ─────────────────────────────────────────────────────────────────────────────
     # Tools
     # ─────────────────────────────────────────────────────────────────────────────
 
-    async def list_tools(self) -> list[dict[str, Any]]:
+    async def list_tools(
+        self,
+        page: int | None = None,
+        per_page: int | None = None,
+    ) -> dict[str, Any]:
         """List all tools in the organization."""
-        return await self._request("GET", "/v1/tools")
+        params = {}
+        if page is not None:
+            params["page"] = page
+        if per_page is not None:
+            params["perPage"] = per_page
+        return await self._request("GET", "/v1/tools", params=params or None)
 
     async def create_webhook_tool(
         self,
