@@ -11,10 +11,7 @@ from mcp.server.fastmcp import FastMCP
 from .client import AnamClient
 
 # Initialize the MCP server
-mcp = FastMCP(
-    "anam",
-    description="Official Anam AI MCP server for managing AI personas, avatars, voices, and sessions",
-)
+mcp = FastMCP("anam")
 
 # Lazy-initialize the client to allow environment variables to be set
 _client: AnamClient | None = None
