@@ -38,14 +38,21 @@ def format_response(data: Any) -> str:
 
 
 @mcp.tool()
-async def list_personas() -> str:
+async def list_personas(
+    page: int | None = None,
+    per_page: int | None = None,
+) -> str:
     """List all personas in your Anam account.
 
-    Returns a list of all personas with their IDs, names, avatar IDs, voice IDs,
-    and system prompts.
+    Returns a paginated list of personas with their IDs, names, avatar IDs, voice IDs,
+    and system prompts. Response includes pagination metadata (total, currentPage, lastPage).
+
+    Args:
+        page: Page number to retrieve (default: 1)
+        per_page: Number of items per page (default: 10)
     """
     client = get_client()
-    result = await client.list_personas()
+    result = await client.list_personas(page=page, per_page=per_page)
     return format_response(result)
 
 
@@ -140,17 +147,24 @@ async def delete_persona(persona_id: str) -> str:
 
 
 @mcp.tool()
-async def list_avatars() -> str:
+async def list_avatars(
+    page: int | None = None,
+    per_page: int | None = None,
+) -> str:
     """List all available avatars.
 
-    Returns a list of avatars with their IDs and names. Use the avatar ID when
-    creating personas or session tokens.
+    Returns a paginated list of avatars with their IDs and names. Use the avatar ID when
+    creating personas or session tokens. Response includes pagination metadata.
 
-    Common avatars include:
-    - Cara (default): 30fa96d0-26c4-4e55-94a0-517025942e18
+    Stock avatars have createdByOrganizationId: null.
+    Custom avatars have your organization's ID in that field.
+
+    Args:
+        page: Page number to retrieve (default: 1)
+        per_page: Number of items per page (default: 10)
     """
     client = get_client()
-    result = await client.list_avatars()
+    result = await client.list_avatars(page=page, per_page=per_page)
     return format_response(result)
 
 
@@ -192,19 +206,24 @@ async def delete_avatar(avatar_id: str) -> str:
 
 
 @mcp.tool()
-async def list_voices() -> str:
+async def list_voices(
+    page: int | None = None,
+    per_page: int | None = None,
+) -> str:
     """List all available voices.
 
-    Returns a list of voices with their IDs, names, and language information.
+    Returns a paginated list of voices with their IDs, names, and language information.
     Use the voice ID when creating personas or session tokens.
-
-    Common voices include:
-    - Cara (default English): 6bfbe25a-979d-40f3-a92b-5394170af54b
+    Response includes pagination metadata (total, currentPage, lastPage).
 
     Over 400 voices are available in 50+ languages.
+
+    Args:
+        page: Page number to retrieve (default: 1)
+        per_page: Number of items per page (default: 10)
     """
     client = get_client()
-    result = await client.list_voices()
+    result = await client.list_voices(page=page, per_page=per_page)
     return format_response(result)
 
 
@@ -214,14 +233,22 @@ async def list_voices() -> str:
 
 
 @mcp.tool()
-async def list_tools() -> str:
+async def list_tools(
+    page: int | None = None,
+    per_page: int | None = None,
+) -> str:
     """List all tools in your organization.
 
-    Returns webhook tools, knowledge tools, and client tools that can be
-    attached to personas to give them additional capabilities.
+    Returns a paginated list of webhook tools, knowledge tools, and client tools
+    that can be attached to personas to give them additional capabilities.
+    Response includes pagination metadata (total, currentPage, lastPage).
+
+    Args:
+        page: Page number to retrieve (default: 1)
+        per_page: Number of items per page (default: 10)
     """
     client = get_client()
-    result = await client.list_tools()
+    result = await client.list_tools(page=page, per_page=per_page)
     return format_response(result)
 
 
