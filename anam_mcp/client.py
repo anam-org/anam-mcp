@@ -8,6 +8,16 @@ from typing import Any
 import httpx
 
 
+class AnamAPIError(Exception):
+    """Exception raised when the Anam API returns an error."""
+
+    def __init__(self, status_code: int, message: str, details: dict | None = None):
+        self.status_code = status_code
+        self.message = message
+        self.details = details or {}
+        super().__init__(f"[{status_code}] {message}")
+
+
 class AnamClient:
     """Async client for interacting with the Anam AI API."""
 
@@ -46,7 +56,29 @@ class AnamClient:
                 params=params,
                 timeout=30.0,
             )
-            response.raise_for_status()
+
+            if response.status_code >= 400:
+                # Try to parse error details from response
+                try:
+                    error_data = response.json()
+                    message = error_data.get("message", error_data.get("error", str(error_data)))
+                    details = error_data
+                except Exception:
+                    message = response.text or f"HTTP {response.status_code}"
+                    details = {}
+
+                # Provide friendly error messages for common cases
+                if response.status_code == 401:
+                    message = "Invalid API key. Check your ANAM_API_KEY."
+                elif response.status_code == 403:
+                    message = f"Access denied: {message}"
+                elif response.status_code == 404:
+                    message = f"Not found: {path}"
+                elif response.status_code == 429:
+                    message = "Rate limit exceeded. Please wait and try again."
+
+                raise AnamAPIError(response.status_code, message, details)
+
             return response.json()
 
     # ─────────────────────────────────────────────────────────────────────────────
