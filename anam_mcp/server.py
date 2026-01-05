@@ -434,16 +434,22 @@ async def search_voices(
         page = 1
         while True:
             result = await client.list_voices(page=page, per_page=DEFAULT_PER_PAGE)
-            items = result.get("data", [])
-            all_items.extend(items)
-            meta = result.get("meta", {})
-            if page >= meta.get("lastPage", 1):
+            # Defensive: ensure result is a dict
+            if not isinstance(result, dict):
+                break
+            items = result.get("data") or []
+            # Defensive: filter out None items
+            all_items.extend([i for i in items if i is not None])
+            meta = result.get("meta") or {}
+            if page >= (meta.get("lastPage") or 1):
                 break
             page += 1
 
         # Filter
         matches = []
         for item in all_items:
+            if not isinstance(item, dict):
+                continue
             name = item.get("displayName") or item.get("name") or ""
             item_country = item.get("country") or ""
             item_gender = item.get("gender") or ""
@@ -475,10 +481,10 @@ async def search_voices(
         lines.append("-" * 90)
 
         for item in display:
-            name = item.get("displayName", item.get("name", "unnamed"))[:29]
-            item_gender = item.get("gender", "-")[:7]
-            item_country = item.get("country", "-")[:7]
-            item_id = item.get("id", "")
+            name = (item.get("displayName") or item.get("name") or "unnamed")[:29]
+            item_gender = (item.get("gender") or "-")[:7]
+            item_country = (item.get("country") or "-")[:7]
+            item_id = item.get("id") or ""
             lines.append(f"{name:<30} {item_gender:<8} {item_country:<8} {item_id}")
 
         return "\n".join(lines)
