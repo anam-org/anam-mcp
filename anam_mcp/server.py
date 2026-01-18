@@ -368,6 +368,46 @@ async def create_avatar(
 
 
 @mcp.tool()
+async def get_avatar(avatar_id: str) -> str:
+    """Get details of a specific avatar by ID.
+
+    Args:
+        avatar_id: The UUID of the avatar to retrieve
+    """
+    client = get_client()
+    try:
+        result = await client.get_avatar(avatar_id)
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def update_avatar(
+    avatar_id: str,
+    name: str | None = None,
+    display_name: str | None = None,
+) -> str:
+    """Update a custom avatar. Only provide the fields you want to change.
+
+    Args:
+        avatar_id: The UUID of the avatar to update
+        name: New internal name
+        display_name: New display name
+    """
+    client = get_client()
+    try:
+        result = await client.update_avatar(
+            avatar_id=avatar_id,
+            name=name,
+            display_name=display_name,
+        )
+        return f"Updated avatar: {result.get('displayName', avatar_id)}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
 async def delete_avatar(avatar_id: str) -> str:
     """Delete a custom avatar by ID. Cannot delete stock avatars.
 
@@ -492,6 +532,95 @@ async def search_voices(
         return format_error(e)
 
 
+@mcp.tool()
+async def get_voice(voice_id: str) -> str:
+    """Get details of a specific voice by ID.
+
+    Args:
+        voice_id: The UUID of the voice to retrieve
+    """
+    client = get_client()
+    try:
+        result = await client.get_voice(voice_id)
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def create_voice(
+    display_name: str,
+    provider: str,
+    provider_voice_id: str,
+    gender: str | None = None,
+    country: str | None = None,
+    description: str | None = None,
+) -> str:
+    """Create a custom voice configuration.
+
+    Args:
+        display_name: Display name for the voice
+        provider: Voice provider (e.g., "cartesia", "elevenlabs")
+        provider_voice_id: The voice ID from the provider
+        gender: Gender of the voice ("MALE" or "FEMALE")
+        country: Country code (e.g., "US", "GB")
+        description: Optional description
+    """
+    client = get_client()
+    try:
+        result = await client.create_voice(
+            display_name=display_name,
+            provider=provider,
+            provider_voice_id=provider_voice_id,
+            gender=gender,
+            country=country,
+            description=description,
+        )
+        return f"Created voice '{display_name}' with ID: {result.get('id')}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def update_voice(
+    voice_id: str,
+    display_name: str | None = None,
+    description: str | None = None,
+) -> str:
+    """Update a voice configuration. Only provide the fields you want to change.
+
+    Args:
+        voice_id: The UUID of the voice to update
+        display_name: New display name
+        description: New description
+    """
+    client = get_client()
+    try:
+        result = await client.update_voice(
+            voice_id=voice_id,
+            display_name=display_name,
+            description=description,
+        )
+        return f"Updated voice: {result.get('displayName', voice_id)}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def delete_voice(voice_id: str) -> str:
+    """Delete a voice by ID.
+
+    Args:
+        voice_id: The UUID of the voice to delete
+    """
+    client = get_client()
+    try:
+        await client.delete_voice(voice_id)
+        return f"Deleted voice: {voice_id}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────
 # Tool Management
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -576,6 +705,55 @@ async def create_knowledge_tool(
 
 
 @mcp.tool()
+async def get_tool(tool_id: str) -> str:
+    """Get details of a specific tool by ID.
+
+    Args:
+        tool_id: The UUID of the tool to retrieve
+    """
+    client = get_client()
+    try:
+        result = await client.get_tool(tool_id)
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def update_tool(
+    tool_id: str,
+    name: str | None = None,
+    description: str | None = None,
+    url: str | None = None,
+    method: str | None = None,
+    await_response: bool | None = None,
+) -> str:
+    """Update a tool. Only provide the fields you want to change.
+
+    Args:
+        tool_id: The UUID of the tool to update
+        name: New tool name
+        description: New description
+        url: New webhook URL (for webhook tools)
+        method: New HTTP method (for webhook tools)
+        await_response: Whether to wait for response (for webhook tools)
+    """
+    client = get_client()
+    try:
+        result = await client.update_tool(
+            tool_id=tool_id,
+            name=name,
+            description=description,
+            url=url,
+            method=method,
+            await_response=await_response,
+        )
+        return f"Updated tool: {result.get('name', tool_id)}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
 async def delete_tool(tool_id: str) -> str:
     """Delete a tool by ID.
 
@@ -640,6 +818,74 @@ async def create_session_token(
         return format_error(e)
 
 
+@mcp.tool()
+async def list_sessions(
+    page: int | None = None,
+    per_page: int | None = None,
+) -> str:
+    """List all sessions in your account.
+
+    Args:
+        page: Page number (default: 1)
+        per_page: Items per page (default: 100)
+    """
+    client = get_client()
+    try:
+        result = await client.list_sessions(page=page, per_page=per_page or DEFAULT_PER_PAGE)
+        items = result.get("data", [])
+        meta = result.get("meta", {})
+
+        if not items:
+            return "No sessions found."
+
+        lines = [f"Sessions ({meta.get('total', len(items))} total):\n"]
+        lines.append(f"{'ID':<38} {'Status':<12} {'Start Time'}")
+        lines.append("-" * 80)
+
+        for item in items:
+            session_id = item.get("id", "")
+            status = item.get("status", "-")[:11]
+            start_time = item.get("startTime", "-")[:20]
+            lines.append(f"{session_id:<38} {status:<12} {start_time}")
+
+        if meta.get("lastPage", 1) > 1:
+            lines.append(f"\nPage {meta.get('currentPage', 1)} of {meta.get('lastPage', 1)}")
+
+        return "\n".join(lines)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def get_session(session_id: str) -> str:
+    """Get details of a specific session by ID.
+
+    Args:
+        session_id: The UUID of the session to retrieve
+    """
+    client = get_client()
+    try:
+        result = await client.get_session(session_id)
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def get_session_recording(session_id: str) -> str:
+    """Get recording information for a session.
+
+    Args:
+        session_id: The UUID of the session
+    """
+    client = get_client()
+    try:
+        result = await client.get_session_recording(session_id)
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────
 # Knowledge Base
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -698,6 +944,506 @@ async def create_knowledge_folder(
             description=description,
         )
         return f"Created folder '{name}' with ID: {result.get('id')}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def get_knowledge_group(group_id: str) -> str:
+    """Get details of a specific knowledge group by ID.
+
+    Args:
+        group_id: The UUID of the knowledge group to retrieve
+    """
+    client = get_client()
+    try:
+        result = await client.get_knowledge_group(group_id)
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def update_knowledge_group(
+    group_id: str,
+    name: str | None = None,
+    description: str | None = None,
+) -> str:
+    """Update a knowledge group. Only provide the fields you want to change.
+
+    Args:
+        group_id: The UUID of the knowledge group to update
+        name: New name
+        description: New description
+    """
+    client = get_client()
+    try:
+        result = await client.update_knowledge_group(
+            group_id=group_id,
+            name=name,
+            description=description,
+        )
+        return f"Updated knowledge group: {result.get('name', group_id)}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def delete_knowledge_group(group_id: str) -> str:
+    """Delete a knowledge group by ID. This will also delete all documents in the group.
+
+    Args:
+        group_id: The UUID of the knowledge group to delete
+    """
+    client = get_client()
+    try:
+        await client.delete_knowledge_group(group_id)
+        return f"Deleted knowledge group: {group_id}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def search_knowledge_group(
+    group_id: str,
+    query: str,
+    limit: int | None = None,
+) -> str:
+    """Search within a knowledge group for relevant documents.
+
+    Args:
+        group_id: The UUID of the knowledge group to search
+        query: Search query
+        limit: Maximum number of results
+    """
+    client = get_client()
+    try:
+        result = await client.search_knowledge_group(
+            group_id=group_id,
+            query=query,
+            limit=limit,
+        )
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# Knowledge Documents
+# ─────────────────────────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+async def list_knowledge_documents(
+    group_id: str,
+    page: int | None = None,
+    per_page: int | None = None,
+) -> str:
+    """List all documents in a knowledge group.
+
+    Args:
+        group_id: The UUID of the knowledge group
+        page: Page number (default: 1)
+        per_page: Items per page (default: 100)
+    """
+    client = get_client()
+    try:
+        result = await client.list_knowledge_documents(
+            group_id=group_id,
+            page=page,
+            per_page=per_page or DEFAULT_PER_PAGE,
+        )
+
+        if isinstance(result, list):
+            items = result
+            total = len(items)
+        else:
+            items = result.get("data", [])
+            meta = result.get("meta", {})
+            total = meta.get("total", len(items))
+
+        if not items:
+            return "No documents found in this knowledge group."
+
+        lines = [f"Documents ({total} total):\n"]
+        lines.append(f"{'Name':<40} {'ID'}")
+        lines.append("-" * 80)
+
+        for item in items:
+            name = item.get("name", "unnamed")[:39]
+            item_id = item.get("id", "")
+            lines.append(f"{name:<40} {item_id}")
+
+        return "\n".join(lines)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def get_knowledge_document(document_id: str) -> str:
+    """Get details of a specific knowledge document by ID.
+
+    Args:
+        document_id: The UUID of the document to retrieve
+    """
+    client = get_client()
+    try:
+        result = await client.get_knowledge_document(document_id)
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def get_knowledge_document_download(document_id: str) -> str:
+    """Get download URL for a knowledge document.
+
+    Args:
+        document_id: The UUID of the document
+    """
+    client = get_client()
+    try:
+        result = await client.get_knowledge_document_download(document_id)
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def upload_knowledge_document(
+    group_id: str,
+    name: str,
+    content: str,
+    content_type: str = "text/plain",
+) -> str:
+    """Upload a document to a knowledge group.
+
+    Args:
+        group_id: The UUID of the knowledge group
+        name: Document name
+        content: Document content (text)
+        content_type: MIME type (default: text/plain)
+    """
+    client = get_client()
+    try:
+        result = await client.upload_knowledge_document(
+            group_id=group_id,
+            name=name,
+            content=content,
+            content_type=content_type,
+        )
+        return f"Uploaded document '{name}' with ID: {result.get('id')}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def update_knowledge_document(
+    document_id: str,
+    name: str | None = None,
+) -> str:
+    """Update a knowledge document.
+
+    Args:
+        document_id: The UUID of the document to update
+        name: New document name
+    """
+    client = get_client()
+    try:
+        result = await client.update_knowledge_document(
+            document_id=document_id,
+            name=name,
+        )
+        return f"Updated document: {result.get('name', document_id)}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def delete_knowledge_document(document_id: str) -> str:
+    """Delete a knowledge document by ID.
+
+    Args:
+        document_id: The UUID of the document to delete
+    """
+    client = get_client()
+    try:
+        await client.delete_knowledge_document(document_id)
+        return f"Deleted document: {document_id}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# LLMs
+# ─────────────────────────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+async def list_llms(
+    page: int | None = None,
+    per_page: int | None = None,
+) -> str:
+    """List all available LLMs.
+
+    Args:
+        page: Page number (default: 1)
+        per_page: Items per page (default: 100)
+    """
+    client = get_client()
+    try:
+        result = await client.list_llms(page=page, per_page=per_page or DEFAULT_PER_PAGE)
+
+        if isinstance(result, list):
+            items = result
+            total = len(items)
+        else:
+            items = result.get("data", [])
+            meta = result.get("meta", {})
+            total = meta.get("total", len(items))
+
+        if not items:
+            return "No LLMs found."
+
+        lines = [f"LLMs ({total} total):\n"]
+        lines.append(f"{'Name':<30} {'Provider':<15} {'ID'}")
+        lines.append("-" * 85)
+
+        for item in items:
+            name = item.get("name", "unnamed")[:29]
+            provider = item.get("provider", "-")[:14]
+            item_id = item.get("id", "")
+            lines.append(f"{name:<30} {provider:<15} {item_id}")
+
+        return "\n".join(lines)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def get_llm(llm_id: str) -> str:
+    """Get details of a specific LLM by ID.
+
+    Args:
+        llm_id: The UUID of the LLM to retrieve
+    """
+    client = get_client()
+    try:
+        result = await client.get_llm(llm_id)
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def create_llm(
+    name: str,
+    provider: str,
+    model: str,
+    api_key: str | None = None,
+    base_url: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+) -> str:
+    """Create a custom LLM configuration.
+
+    Args:
+        name: Display name for the LLM
+        provider: LLM provider (e.g., "openai", "anthropic")
+        model: Model name (e.g., "gpt-4", "claude-3")
+        api_key: API key for the provider
+        base_url: Custom base URL (for self-hosted models)
+        temperature: Sampling temperature
+        max_tokens: Maximum output tokens
+    """
+    client = get_client()
+    try:
+        result = await client.create_llm(
+            name=name,
+            provider=provider,
+            model=model,
+            api_key=api_key,
+            base_url=base_url,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        return f"Created LLM '{name}' with ID: {result.get('id')}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def update_llm(
+    llm_id: str,
+    name: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+) -> str:
+    """Update an LLM configuration. Only provide the fields you want to change.
+
+    Args:
+        llm_id: The UUID of the LLM to update
+        name: New display name
+        temperature: New sampling temperature
+        max_tokens: New maximum output tokens
+    """
+    client = get_client()
+    try:
+        result = await client.update_llm(
+            llm_id=llm_id,
+            name=name,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        return f"Updated LLM: {result.get('name', llm_id)}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def delete_llm(llm_id: str) -> str:
+    """Delete an LLM by ID.
+
+    Args:
+        llm_id: The UUID of the LLM to delete
+    """
+    client = get_client()
+    try:
+        await client.delete_llm(llm_id)
+        return f"Deleted LLM: {llm_id}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# Share Links
+# ─────────────────────────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+async def list_share_links(
+    page: int | None = None,
+    per_page: int | None = None,
+) -> str:
+    """List all share links in your organization.
+
+    Args:
+        page: Page number (default: 1)
+        per_page: Items per page (default: 100)
+    """
+    client = get_client()
+    try:
+        result = await client.list_share_links(page=page, per_page=per_page or DEFAULT_PER_PAGE)
+        items = result.get("data", [])
+        meta = result.get("meta", {})
+
+        if not items:
+            return "No share links found."
+
+        lines = [f"Share Links ({meta.get('total', len(items))} total):\n"]
+        lines.append(f"{'Name':<25} {'Active':<8} {'ID'}")
+        lines.append("-" * 80)
+
+        for item in items:
+            name = item.get("name", "unnamed")[:24]
+            is_active = "Yes" if item.get("isActive", True) else "No"
+            item_id = item.get("id", "")
+            lines.append(f"{name:<25} {is_active:<8} {item_id}")
+
+        if meta.get("lastPage", 1) > 1:
+            lines.append(f"\nPage {meta.get('currentPage', 1)} of {meta.get('lastPage', 1)}")
+
+        return "\n".join(lines)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def get_share_link(link_id: str) -> str:
+    """Get details of a specific share link by ID.
+
+    Args:
+        link_id: The UUID of the share link to retrieve
+    """
+    client = get_client()
+    try:
+        result = await client.get_share_link(link_id)
+        return format_response(result)
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def create_share_link(
+    persona_id: str,
+    name: str | None = None,
+    expires_at: str | None = None,
+    max_uses: int | None = None,
+) -> str:
+    """Create a new share link for a persona.
+
+    Args:
+        persona_id: The UUID of the persona to share
+        name: Optional name for the link
+        expires_at: Expiration timestamp (ISO 8601)
+        max_uses: Maximum number of uses
+    """
+    client = get_client()
+    try:
+        result = await client.create_share_link(
+            persona_id=persona_id,
+            name=name,
+            expires_at=expires_at,
+            max_uses=max_uses,
+        )
+        link_url = result.get("url", "")
+        return f"Created share link with ID: {result.get('id')}\nURL: {link_url}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def update_share_link(
+    link_id: str,
+    name: str | None = None,
+    expires_at: str | None = None,
+    max_uses: int | None = None,
+    is_active: bool | None = None,
+) -> str:
+    """Update a share link. Only provide the fields you want to change.
+
+    Args:
+        link_id: The UUID of the share link to update
+        name: New name
+        expires_at: New expiration timestamp (ISO 8601)
+        max_uses: New maximum number of uses
+        is_active: Whether the link is active
+    """
+    client = get_client()
+    try:
+        result = await client.update_share_link(
+            link_id=link_id,
+            name=name,
+            expires_at=expires_at,
+            max_uses=max_uses,
+            is_active=is_active,
+        )
+        return f"Updated share link: {result.get('name', link_id)}"
+    except AnamAPIError as e:
+        return format_error(e)
+
+
+@mcp.tool()
+async def delete_share_link(link_id: str) -> str:
+    """Delete a share link by ID.
+
+    Args:
+        link_id: The UUID of the share link to delete
+    """
+    client = get_client()
+    try:
+        await client.delete_share_link(link_id)
+        return f"Deleted share link: {link_id}"
     except AnamAPIError as e:
         return format_error(e)
 

@@ -79,6 +79,10 @@ class AnamClient:
 
                 raise AnamAPIError(response.status_code, message, details)
 
+            # Handle empty responses (e.g., 204 No Content from DELETE)
+            if response.status_code == 204 or not response.content:
+                return {}
+
             # Ensure we always return a dict, even if API returns null/empty
             result = response.json()
             if result is None:
@@ -174,6 +178,10 @@ class AnamClient:
             params["perPage"] = per_page
         return await self._request("GET", "/v1/avatars", params=params or None)
 
+    async def get_avatar(self, avatar_id: str) -> dict[str, Any]:
+        """Get an avatar by ID."""
+        return await self._request("GET", f"/v1/avatars/{avatar_id}")
+
     async def create_avatar(
         self,
         name: str,
@@ -188,12 +196,16 @@ class AnamClient:
     async def update_avatar(
         self,
         avatar_id: str,
-        name: str,
+        name: str | None = None,
+        display_name: str | None = None,
     ) -> dict[str, Any]:
-        """Update an avatar's display name."""
-        return await self._request(
-            "PUT", f"/v1/avatars/{avatar_id}", json={"name": name}
-        )
+        """Update an avatar."""
+        payload = {}
+        if name is not None:
+            payload["name"] = name
+        if display_name is not None:
+            payload["displayName"] = display_name
+        return await self._request("PUT", f"/v1/avatars/{avatar_id}", json=payload)
 
     async def delete_avatar(self, avatar_id: str) -> dict[str, Any]:
         """Delete an avatar by ID."""
@@ -215,6 +227,51 @@ class AnamClient:
         if per_page is not None:
             params["perPage"] = per_page
         return await self._request("GET", "/v1/voices", params=params or None)
+
+    async def get_voice(self, voice_id: str) -> dict[str, Any]:
+        """Get a voice by ID."""
+        return await self._request("GET", f"/v1/voices/{voice_id}")
+
+    async def create_voice(
+        self,
+        display_name: str,
+        provider: str,
+        provider_voice_id: str,
+        gender: str | None = None,
+        country: str | None = None,
+        description: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a custom voice."""
+        payload = {
+            "displayName": display_name,
+            "provider": provider,
+            "providerVoiceId": provider_voice_id,
+        }
+        if gender is not None:
+            payload["gender"] = gender
+        if country is not None:
+            payload["country"] = country
+        if description is not None:
+            payload["description"] = description
+        return await self._request("POST", "/v1/voices", json=payload)
+
+    async def update_voice(
+        self,
+        voice_id: str,
+        display_name: str | None = None,
+        description: str | None = None,
+    ) -> dict[str, Any]:
+        """Update a voice."""
+        payload = {}
+        if display_name is not None:
+            payload["displayName"] = display_name
+        if description is not None:
+            payload["description"] = description
+        return await self._request("PUT", f"/v1/voices/{voice_id}", json=payload)
+
+    async def delete_voice(self, voice_id: str) -> dict[str, Any]:
+        """Delete a voice by ID."""
+        return await self._request("DELETE", f"/v1/voices/{voice_id}")
 
     # ─────────────────────────────────────────────────────────────────────────────
     # Tools
@@ -275,6 +332,33 @@ class AnamClient:
         }
         return await self._request("POST", "/v1/tools", json=payload)
 
+    async def get_tool(self, tool_id: str) -> dict[str, Any]:
+        """Get a tool by ID."""
+        return await self._request("GET", f"/v1/tools/{tool_id}")
+
+    async def update_tool(
+        self,
+        tool_id: str,
+        name: str | None = None,
+        description: str | None = None,
+        url: str | None = None,
+        method: str | None = None,
+        await_response: bool | None = None,
+    ) -> dict[str, Any]:
+        """Update a tool."""
+        payload = {}
+        if name is not None:
+            payload["name"] = name
+        if description is not None:
+            payload["description"] = description
+        if url is not None:
+            payload["url"] = url
+        if method is not None:
+            payload["method"] = method
+        if await_response is not None:
+            payload["awaitResponse"] = await_response
+        return await self._request("PUT", f"/v1/tools/{tool_id}", json=payload)
+
     async def delete_tool(self, tool_id: str) -> dict[str, Any]:
         """Delete a tool by ID."""
         return await self._request("DELETE", f"/v1/tools/{tool_id}")
@@ -323,13 +407,47 @@ class AnamClient:
             "POST", "/v1/auth/session-token", json={"personaConfig": persona_config}
         )
 
+    async def list_sessions(
+        self,
+        page: int | None = None,
+        per_page: int | None = None,
+    ) -> dict[str, Any]:
+        """List all sessions."""
+        params = {}
+        if page is not None:
+            params["page"] = page
+        if per_page is not None:
+            params["perPage"] = per_page
+        return await self._request("GET", "/v1/sessions", params=params or None)
+
+    async def get_session(self, session_id: str) -> dict[str, Any]:
+        """Get a session by ID."""
+        return await self._request("GET", f"/v1/sessions/{session_id}")
+
+    async def get_session_recording(self, session_id: str) -> dict[str, Any]:
+        """Get a session recording."""
+        return await self._request("GET", f"/v1/sessions/{session_id}/recording")
+
     # ─────────────────────────────────────────────────────────────────────────────
     # Knowledge Base
     # ─────────────────────────────────────────────────────────────────────────────
 
-    async def list_knowledge_folders(self) -> list[dict[str, Any]]:
-        """List all knowledge folders."""
-        return await self._request("GET", "/v1/knowledge/groups")
+    async def list_knowledge_folders(
+        self,
+        page: int | None = None,
+        per_page: int | None = None,
+    ) -> dict[str, Any]:
+        """List all knowledge folders (groups)."""
+        params = {}
+        if page is not None:
+            params["page"] = page
+        if per_page is not None:
+            params["perPage"] = per_page
+        return await self._request("GET", "/v1/knowledge/groups", params=params or None)
+
+    async def get_knowledge_group(self, group_id: str) -> dict[str, Any]:
+        """Get a knowledge group by ID."""
+        return await self._request("GET", f"/v1/knowledge/groups/{group_id}")
 
     async def create_knowledge_folder(
         self,
@@ -341,3 +459,227 @@ class AnamClient:
         if description:
             payload["description"] = description
         return await self._request("POST", "/v1/knowledge/groups", json=payload)
+
+    async def update_knowledge_group(
+        self,
+        group_id: str,
+        name: str | None = None,
+        description: str | None = None,
+    ) -> dict[str, Any]:
+        """Update a knowledge group."""
+        payload = {}
+        if name is not None:
+            payload["name"] = name
+        if description is not None:
+            payload["description"] = description
+        return await self._request("PUT", f"/v1/knowledge/groups/{group_id}", json=payload)
+
+    async def delete_knowledge_group(self, group_id: str) -> dict[str, Any]:
+        """Delete a knowledge group by ID."""
+        return await self._request("DELETE", f"/v1/knowledge/groups/{group_id}")
+
+    async def search_knowledge_group(
+        self,
+        group_id: str,
+        query: str,
+        limit: int | None = None,
+    ) -> dict[str, Any]:
+        """Search within a knowledge group."""
+        payload = {"query": query}
+        if limit is not None:
+            payload["limit"] = limit
+        return await self._request("POST", f"/v1/knowledge/groups/{group_id}/search", json=payload)
+
+    # ─────────────────────────────────────────────────────────────────────────────
+    # Knowledge Documents
+    # ─────────────────────────────────────────────────────────────────────────────
+
+    async def list_knowledge_documents(
+        self,
+        group_id: str,
+        page: int | None = None,
+        per_page: int | None = None,
+    ) -> dict[str, Any]:
+        """List documents in a knowledge group."""
+        params = {}
+        if page is not None:
+            params["page"] = page
+        if per_page is not None:
+            params["perPage"] = per_page
+        return await self._request(
+            "GET", f"/v1/knowledge/groups/{group_id}/documents", params=params or None
+        )
+
+    async def get_knowledge_document(self, document_id: str) -> dict[str, Any]:
+        """Get a knowledge document by ID."""
+        return await self._request("GET", f"/v1/knowledge/documents/{document_id}")
+
+    async def get_knowledge_document_download(self, document_id: str) -> dict[str, Any]:
+        """Get download URL for a knowledge document."""
+        return await self._request("GET", f"/v1/knowledge/documents/{document_id}/download")
+
+    async def upload_knowledge_document(
+        self,
+        group_id: str,
+        name: str,
+        content: str,
+        content_type: str = "text/plain",
+    ) -> dict[str, Any]:
+        """Upload a document to a knowledge group.
+
+        Note: For file uploads, use the appropriate content_type.
+        This method handles text content directly.
+        """
+        payload = {
+            "name": name,
+            "content": content,
+            "contentType": content_type,
+        }
+        return await self._request(
+            "POST", f"/v1/knowledge/groups/{group_id}/documents", json=payload
+        )
+
+    async def update_knowledge_document(
+        self,
+        document_id: str,
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """Update a knowledge document."""
+        payload = {}
+        if name is not None:
+            payload["name"] = name
+        return await self._request("PUT", f"/v1/knowledge/documents/{document_id}", json=payload)
+
+    async def delete_knowledge_document(self, document_id: str) -> dict[str, Any]:
+        """Delete a knowledge document by ID."""
+        return await self._request("DELETE", f"/v1/knowledge/documents/{document_id}")
+
+    # ─────────────────────────────────────────────────────────────────────────────
+    # LLMs
+    # ─────────────────────────────────────────────────────────────────────────────
+
+    async def list_llms(
+        self,
+        page: int | None = None,
+        per_page: int | None = None,
+    ) -> dict[str, Any]:
+        """List all available LLMs."""
+        params = {}
+        if page is not None:
+            params["page"] = page
+        if per_page is not None:
+            params["perPage"] = per_page
+        return await self._request("GET", "/v1/llms", params=params or None)
+
+    async def get_llm(self, llm_id: str) -> dict[str, Any]:
+        """Get an LLM by ID."""
+        return await self._request("GET", f"/v1/llms/{llm_id}")
+
+    async def create_llm(
+        self,
+        name: str,
+        provider: str,
+        model: str,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> dict[str, Any]:
+        """Create a custom LLM configuration."""
+        payload = {
+            "name": name,
+            "provider": provider,
+            "model": model,
+        }
+        if api_key is not None:
+            payload["apiKey"] = api_key
+        if base_url is not None:
+            payload["baseUrl"] = base_url
+        if temperature is not None:
+            payload["temperature"] = temperature
+        if max_tokens is not None:
+            payload["maxTokens"] = max_tokens
+        return await self._request("POST", "/v1/llms", json=payload)
+
+    async def update_llm(
+        self,
+        llm_id: str,
+        name: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> dict[str, Any]:
+        """Update an LLM configuration."""
+        payload = {}
+        if name is not None:
+            payload["name"] = name
+        if temperature is not None:
+            payload["temperature"] = temperature
+        if max_tokens is not None:
+            payload["maxTokens"] = max_tokens
+        return await self._request("PUT", f"/v1/llms/{llm_id}", json=payload)
+
+    async def delete_llm(self, llm_id: str) -> dict[str, Any]:
+        """Delete an LLM by ID."""
+        return await self._request("DELETE", f"/v1/llms/{llm_id}")
+
+    # ─────────────────────────────────────────────────────────────────────────────
+    # Share Links
+    # ─────────────────────────────────────────────────────────────────────────────
+
+    async def list_share_links(
+        self,
+        page: int | None = None,
+        per_page: int | None = None,
+    ) -> dict[str, Any]:
+        """List all share links."""
+        params = {}
+        if page is not None:
+            params["page"] = page
+        if per_page is not None:
+            params["perPage"] = per_page
+        return await self._request("GET", "/v1/share-links", params=params or None)
+
+    async def get_share_link(self, link_id: str) -> dict[str, Any]:
+        """Get a share link by ID."""
+        return await self._request("GET", f"/v1/share-links/{link_id}")
+
+    async def create_share_link(
+        self,
+        persona_id: str,
+        name: str | None = None,
+        expires_at: str | None = None,
+        max_uses: int | None = None,
+    ) -> dict[str, Any]:
+        """Create a new share link for a persona."""
+        payload = {"personaId": persona_id}
+        if name is not None:
+            payload["name"] = name
+        if expires_at is not None:
+            payload["expiresAt"] = expires_at
+        if max_uses is not None:
+            payload["maxUses"] = max_uses
+        return await self._request("POST", "/v1/share-links", json=payload)
+
+    async def update_share_link(
+        self,
+        link_id: str,
+        name: str | None = None,
+        expires_at: str | None = None,
+        max_uses: int | None = None,
+        is_active: bool | None = None,
+    ) -> dict[str, Any]:
+        """Update a share link."""
+        payload = {}
+        if name is not None:
+            payload["name"] = name
+        if expires_at is not None:
+            payload["expiresAt"] = expires_at
+        if max_uses is not None:
+            payload["maxUses"] = max_uses
+        if is_active is not None:
+            payload["isActive"] = is_active
+        return await self._request("PUT", f"/v1/share-links/{link_id}", json=payload)
+
+    async def delete_share_link(self, link_id: str) -> dict[str, Any]:
+        """Delete a share link by ID."""
+        return await self._request("DELETE", f"/v1/share-links/{link_id}")
