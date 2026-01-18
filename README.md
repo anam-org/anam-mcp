@@ -78,7 +78,10 @@ Add to your project's `.mcp.json`:
 | Tool | Description |
 |------|-------------|
 | `list_avatars` | List all available avatars |
+| `search_avatars` | Search avatars by name or description |
+| `get_avatar` | Get details of a specific avatar |
 | `create_avatar` | Create custom avatar from image (enterprise/pro) |
+| `update_avatar` | Update an avatar's metadata |
 | `delete_avatar` | Delete a custom avatar |
 
 ### Voice Management
@@ -86,14 +89,21 @@ Add to your project's `.mcp.json`:
 | Tool | Description |
 |------|-------------|
 | `list_voices` | List all available voices (400+ in 50+ languages) |
+| `search_voices` | Search voices by name, language, or gender |
+| `get_voice` | Get details of a specific voice |
+| `create_voice` | Create a custom voice |
+| `update_voice` | Update a voice's metadata |
+| `delete_voice` | Delete a custom voice |
 
 ### Tool Management
 
 | Tool | Description |
 |------|-------------|
 | `list_tools` | List all tools in your organization |
+| `get_tool` | Get details of a specific tool |
 | `create_webhook_tool` | Create a webhook tool for API integrations |
 | `create_knowledge_tool` | Create a knowledge/RAG tool |
+| `update_tool` | Update a tool's configuration |
 | `delete_tool` | Delete a tool |
 
 ### Session Management
@@ -101,13 +111,51 @@ Add to your project's `.mcp.json`:
 | Tool | Description |
 |------|-------------|
 | `create_session_token` | Generate a session token for the client SDK |
+| `list_sessions` | List all sessions with optional filters |
+| `get_session` | Get details of a specific session |
+| `get_session_recording` | Download a session recording |
 
-### Knowledge Base
+### Knowledge Folders
 
 | Tool | Description |
 |------|-------------|
 | `list_knowledge_folders` | List knowledge folders |
+| `get_knowledge_folder` | Get details of a specific folder |
 | `create_knowledge_folder` | Create a new folder for documents |
+| `update_knowledge_folder` | Update a folder's metadata |
+| `delete_knowledge_folder` | Delete a knowledge folder |
+| `search_knowledge_folder` | Search within a knowledge folder |
+
+### Knowledge Documents
+
+| Tool | Description |
+|------|-------------|
+| `list_knowledge_documents` | List documents in a folder |
+| `get_knowledge_document` | Get details of a specific document |
+| `upload_knowledge_document` | Upload a document to a folder |
+| `update_knowledge_document` | Update document metadata |
+| `delete_knowledge_document` | Delete a document |
+| `get_knowledge_document_download` | Download a document |
+
+### LLM Management
+
+| Tool | Description |
+|------|-------------|
+| `list_llms` | List all LLM configurations |
+| `get_llm` | Get details of a specific LLM |
+| `create_llm` | Create a new LLM configuration |
+| `update_llm` | Update an LLM configuration |
+| `delete_llm` | Delete an LLM configuration |
+
+### Share Links
+
+| Tool | Description |
+|------|-------------|
+| `list_share_links` | List all share links |
+| `get_share_link` | Get details of a specific share link |
+| `create_share_link` | Create a share link for a persona |
+| `update_share_link` | Update a share link |
+| `delete_share_link` | Delete a share link |
 
 ## Example Usage
 
