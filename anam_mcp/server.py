@@ -1489,20 +1489,14 @@ async def generate_avatar_video(
     Stock Avatars (use with voice_id):
         Female:
         - Liv: 071b0286-4cce-4808-bee2-e642f1062de3
-        - Cara: 30fa96d0-26c4-4e55-94a0-517025942e18
         - Mia: edf6fdcb-acab-44b8-b974-ded72665ee26
-        - Evelyn: 290ef1d5-9201-40f4-8c88-394a6317f10d
-        - Astrid: bdaaedfa-00f2-417a-8239-8bb89adec682
         - Sophie: 6dbc1e47-7768-403e-878a-94d7fcc3677b
         - Bella: dc9aa3e1-32f2-499e-9921-ecabac1076fc
         - Julia: edcb8f1a-334f-4cdb-871c-5c513db806a7
         - Anne: 27e12daa-50fc-4384-93c2-ebca73f1f78d
         - Layla: ae2ea8c1-db28-47e3-b6ea-493e4ed3c554
         Male:
-        - Leo: aa5d6abd-416f-4dd4-a123-b5b29bf1644a
         - Gabriel: 6cc28442-cccd-42a8-b6e4-24b7210a09c5
-        - Pablo: 8dd64886-ce4b-47d5-b837-619660854768
-        - Alister: c1785d08-9825-4ead-89b3-171d3f667c47
         - Finn: 8a339c9f-0666-46bd-ab27-e90acd0409dc
         - Hunter: ecfb2ddb-80ec-4526-88a7-299a4738957c
         - Kevin: ccf00c0e-7302-455b-ace2-057e0cf58127
