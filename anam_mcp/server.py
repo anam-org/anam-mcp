@@ -1465,8 +1465,8 @@ async def generate_avatar_video(
     avatar_id: str | None = None,
     voice_id: str | None = None,
     avatar_model: str = "cara-3",
-    poll_interval: float = 2.0,
-    max_wait: float = 300.0,
+    poll_interval: float = 3.0,
+    max_wait: float = 600.0,
 ) -> str:
     """Generate an avatar video from a text script.
 
@@ -1474,7 +1474,8 @@ async def generate_avatar_video(
     Contact support@anam.ai for access.
 
     Creates an MP4 video of an avatar speaking the provided script.
-    The video generation runs asynchronously and may take 10-60 seconds.
+    The video generation runs asynchronously and may take 30-120 seconds
+    depending on script length.
 
     Args:
         script: The text for the avatar to speak
@@ -1482,8 +1483,8 @@ async def generate_avatar_video(
         avatar_id: Avatar ID for ephemeral session (requires voice_id)
         voice_id: Voice ID for ephemeral session (requires avatar_id)
         avatar_model: Avatar model to use (default: cara-3)
-        poll_interval: Seconds between status checks (default: 2.0)
-        max_wait: Maximum seconds to wait for completion (default: 300.0)
+        poll_interval: Seconds between status checks (default: 3.0)
+        max_wait: Maximum seconds to wait for completion (default: 600.0)
 
     Returns:
         Download URL for the generated video, or error message
