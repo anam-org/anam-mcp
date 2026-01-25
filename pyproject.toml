@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "anam-mcp"
-version = "0.1.8"
+version = "0.1.9"
 description = "Official Anam AI MCP server for managing AI personas"
 readme = "README.md"
 license = "MIT"
