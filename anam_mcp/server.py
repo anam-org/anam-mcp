@@ -1486,6 +1486,33 @@ async def generate_avatar_video(
         poll_interval: Seconds between status checks (default: 3.0)
         max_wait: Maximum seconds to wait for completion (default: 600.0)
 
+    Stock Avatars (use with voice_id):
+        Female:
+        - Liv: 071b0286-4cce-4808-bee2-e642f1062de3
+        - Cara: 30fa96d0-26c4-4e55-94a0-517025942e18
+        - Mia: edf6fdcb-acab-44b8-b974-ded72665ee26
+        - Evelyn: 290ef1d5-9201-40f4-8c88-394a6317f10d
+        - Astrid: bdaaedfa-00f2-417a-8239-8bb89adec682
+        - Sophie: 6dbc1e47-7768-403e-878a-94d7fcc3677b
+        - Bella: dc9aa3e1-32f2-499e-9921-ecabac1076fc
+        - Julia: edcb8f1a-334f-4cdb-871c-5c513db806a7
+        - Anne: 27e12daa-50fc-4384-93c2-ebca73f1f78d
+        - Layla: ae2ea8c1-db28-47e3-b6ea-493e4ed3c554
+        Male:
+        - Leo: aa5d6abd-416f-4dd4-a123-b5b29bf1644a
+        - Gabriel: 6cc28442-cccd-42a8-b6e4-24b7210a09c5
+        - Pablo: 8dd64886-ce4b-47d5-b837-619660854768
+        - Alister: c1785d08-9825-4ead-89b3-171d3f667c47
+        - Finn: 8a339c9f-0666-46bd-ab27-e90acd0409dc
+        - Hunter: ecfb2ddb-80ec-4526-88a7-299a4738957c
+        - Kevin: ccf00c0e-7302-455b-ace2-057e0cf58127
+        - Richard: 19d18eb0-5346-4d50-a77f-26b3723ed79d
+        - William: 81b70170-2e80-4e4b-a6fb-e04ac110dc4b
+
+    Recommended Voices:
+        Female: Jessica - b138c2a2-ba66-4887-95d5-1a57093fc92d
+        Male: Adam - e54745c7-9439-44c3-b61a-193b42cce5bd
+
     Returns:
         Download URL for the generated video, or error message
     """
