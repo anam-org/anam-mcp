@@ -157,6 +157,14 @@ Add to your project's `.mcp.json`:
 | `update_share_link` | Update a share link |
 | `delete_share_link` | Delete a share link |
 
+### Text-to-Avatar (Early Access)
+
+> **Internal Testing** - This feature is in early access. Contact [support@anam.ai](mailto:support@anam.ai) for access.
+
+| Tool | Description |
+|------|-------------|
+| `generate_avatar_video` | Generate an MP4 video of an avatar speaking a script |
+
 ## Example Usage
 
 Once configured, you can ask Claude:
@@ -182,6 +190,7 @@ For quick testing, you can use these default IDs:
 |----------|-------------|---------|
 | `ANAM_API_KEY` | Your Anam API key (required) | - |
 | `ANAM_API_URL` | API base URL (for staging) | `https://api.anam.ai` |
+| `TEXT_TO_AVATAR_URL` | Text-to-avatar service URL (early access) | `https://anam-org--text-to-avatar-api.modal.run` |
 
 ## Documentation
 

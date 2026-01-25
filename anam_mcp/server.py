@@ -1448,6 +1448,131 @@ async def delete_share_link(link_id: str) -> str:
         return format_error(e)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Text-to-Avatar (Internal Testing)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Text-to-Avatar service configuration
+TEXT_TO_AVATAR_BASE_URL = os.getenv(
+    "TEXT_TO_AVATAR_URL", "https://anam-org--text-to-avatar-api.modal.run"
+)
+
+
+@mcp.tool()
+async def generate_avatar_video(
+    script: str,
+    persona_id: str | None = None,
+    avatar_id: str | None = None,
+    voice_id: str | None = None,
+    avatar_model: str = "cara-3",
+    poll_interval: float = 2.0,
+    max_wait: float = 300.0,
+) -> str:
+    """Generate an avatar video from a text script.
+
+    **INTERNAL TESTING ONLY** - This feature is in early access.
+    Contact support@anam.ai for access.
+
+    Creates an MP4 video of an avatar speaking the provided script.
+    The video generation runs asynchronously and may take 10-60 seconds.
+
+    Args:
+        script: The text for the avatar to speak
+        persona_id: Use a saved persona (provide this OR avatar_id + voice_id)
+        avatar_id: Avatar ID for ephemeral session (requires voice_id)
+        voice_id: Voice ID for ephemeral session (requires avatar_id)
+        avatar_model: Avatar model to use (default: cara-3)
+        poll_interval: Seconds between status checks (default: 2.0)
+        max_wait: Maximum seconds to wait for completion (default: 300.0)
+
+    Returns:
+        Download URL for the generated video, or error message
+    """
+    import asyncio
+
+    import httpx
+
+    api_key = os.getenv("ANAM_API_KEY")
+    if not api_key:
+        return "Error: ANAM_API_KEY environment variable is required"
+
+    # Validate input
+    if not script or not script.strip():
+        return "Error: script is required and cannot be empty"
+
+    if not persona_id and not (avatar_id and voice_id):
+        return "Error: Provide either persona_id OR both avatar_id and voice_id"
+
+    # Build request payload
+    payload: dict[str, Any] = {"script": script}
+    if persona_id:
+        payload["persona_id"] = persona_id
+    else:
+        payload["avatar_id"] = avatar_id
+        payload["voice_id"] = voice_id
+        payload["avatar_model"] = avatar_model
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-API-Key": api_key,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Submit the job
+            response = await client.post(
+                f"{TEXT_TO_AVATAR_BASE_URL}/generate",
+                headers=headers,
+                json=payload,
+            )
+
+            if response.status_code == 401:
+                return "Error: Invalid API key for text-to-avatar service"
+            if response.status_code != 200:
+                return f"Error: Failed to submit job - {response.text}"
+
+            job = response.json()
+            call_id = job.get("call_id")
+            if not call_id:
+                return "Error: No call_id returned from service"
+
+            # Poll for completion
+            elapsed = 0.0
+            while elapsed < max_wait:
+                status_response = await client.get(
+                    f"{TEXT_TO_AVATAR_BASE_URL}/status/{call_id}",
+                    headers=headers,
+                )
+
+                if status_response.status_code != 200:
+                    return f"Error: Failed to check status - {status_response.text}"
+
+                status_data = status_response.json()
+                status = status_data.get("status")
+
+                if status == "complete":
+                    download_url = f"{TEXT_TO_AVATAR_BASE_URL}/download/{call_id}"
+                    return (
+                        f"Video generated successfully!\n\n"
+                        f"Download URL: {download_url}\n\n"
+                        f"Note: Video is available for 7 days."
+                    )
+
+                if status == "failed":
+                    error = status_data.get("error", "Unknown error")
+                    return f"Error: Video generation failed - {error}"
+
+                await asyncio.sleep(poll_interval)
+                elapsed += poll_interval
+
+            return f"Error: Timed out waiting for video generation (waited {max_wait}s)"
+
+    except httpx.TimeoutException:
+        return "Error: Request timed out"
+    except Exception as e:
+        return f"Error: {e}"
+
+
 def main():
     """Run the Anam MCP server."""
     mcp.run()
