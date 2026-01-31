@@ -367,6 +367,11 @@ class AnamClient:
     # Sessions
     # ─────────────────────────────────────────────────────────────────────────────
 
+    # Default IDs for ephemeral sessions
+    DEFAULT_LLM_ID = "7736a22f-2d79-4720-952c-25fdca55ad40"  # GPT-4o-mini
+    DEFAULT_VOICE_ID = "6bfbe25a-979d-40f3-a92b-5394170af54b"  # "Cara" - English female
+    DEFAULT_AVATAR_ID = "30fa96d0-26c4-4e55-94a0-517025942e18"  # "Cara" avatar
+
     async def create_session_token(
         self,
         persona_id: str | None = None,
@@ -375,8 +380,9 @@ class AnamClient:
         voice_id: str | None = None,
         system_prompt: str | None = None,
         llm_id: str | None = None,
-        language_code: str | None = None,
+        avatar_model: str = "cara-3",
         max_session_length_seconds: int | None = None,
+        skip_greeting: bool | None = None,
     ) -> dict[str, Any]:
         """
         Create a session token for connecting to an Anam persona.
@@ -384,26 +390,31 @@ class AnamClient:
         Use EITHER persona_id (for saved personas) OR the individual config fields
         (for ephemeral sessions).
 
-        For ephemeral sessions, llm_id defaults to ANAM_GPT_4O_MINI_V1.
+        For ephemeral sessions:
+        - avatarModel defaults to "cara-3"
+        - llmId defaults to GPT-4o-mini
+        - voiceId defaults to "Cara" voice (REQUIRED for ephemeral)
+        - avatarId defaults to "Cara" avatar
         """
         if persona_id:
             persona_config = {"personaId": persona_id}
         else:
-            persona_config = {}
+            # Ephemeral session config
+            # voiceId is REQUIRED for ephemeral sessions - server rejects without it
+            persona_config: dict[str, Any] = {
+                "avatarModel": avatar_model,
+                "llmId": llm_id or self.DEFAULT_LLM_ID,
+                "voiceId": voice_id or self.DEFAULT_VOICE_ID,
+                "avatarId": avatar_id or self.DEFAULT_AVATAR_ID,
+            }
             if name:
                 persona_config["name"] = name
-            if avatar_id:
-                persona_config["avatarId"] = avatar_id
-            if voice_id:
-                persona_config["voiceId"] = voice_id
             if system_prompt:
                 persona_config["systemPrompt"] = system_prompt
-            # llmId is required for ephemeral sessions (backend uses it to detect type)
-            persona_config["llmId"] = llm_id or "7736a22f-2d79-4720-952c-25fdca55ad40"
-            if language_code:
-                persona_config["languageCode"] = language_code
             if max_session_length_seconds:
                 persona_config["maxSessionLengthSeconds"] = max_session_length_seconds
+            if skip_greeting is not None:
+                persona_config["skipGreeting"] = skip_greeting
 
         return await self._request(
             "POST", "/v1/auth/session-token", json={"personaConfig": persona_config}
