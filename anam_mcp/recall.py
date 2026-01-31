@@ -120,11 +120,12 @@ class RecallClient:
                     },
                 },
             },
-            # Use web_4_core variant for better frame rate (more CPU cores)
+            # Use web_gpu variant for best quality (6000mc CPU, 13GB RAM, WebGL support)
+            # This provides hardware-accelerated video rendering for smooth playback
             "variant": {
-                "zoom": "web_4_core",
-                "google_meet": "web_4_core",
-                "microsoft_teams": "web_4_core",
+                "zoom": "web_gpu",
+                "google_meet": "web_gpu",
+                "microsoft_teams": "web_gpu",
             },
         }
         if join_at:
