@@ -120,6 +120,12 @@ class RecallClient:
                     },
                 },
             },
+            # Use web_4_core variant for better frame rate (more CPU cores)
+            "variant": {
+                "zoom": "web_4_core",
+                "google_meet": "web_4_core",
+                "microsoft_teams": "web_4_core",
+            },
         }
         if join_at:
             payload["join_at"] = join_at
