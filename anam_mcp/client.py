@@ -383,6 +383,8 @@ class AnamClient:
 
         Use EITHER persona_id (for saved personas) OR the individual config fields
         (for ephemeral sessions).
+
+        For ephemeral sessions, llm_id defaults to ANAM_GPT_4O_MINI_V1.
         """
         if persona_id:
             persona_config = {"personaId": persona_id}
@@ -396,8 +398,8 @@ class AnamClient:
                 persona_config["voiceId"] = voice_id
             if system_prompt:
                 persona_config["systemPrompt"] = system_prompt
-            if llm_id:
-                persona_config["llmId"] = llm_id
+            # llmId is required for ephemeral sessions (backend uses it to detect type)
+            persona_config["llmId"] = llm_id or "7736a22f-2d79-4720-952c-25fdca55ad40"
             if language_code:
                 persona_config["languageCode"] = language_code
             if max_session_length_seconds:
