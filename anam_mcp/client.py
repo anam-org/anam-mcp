@@ -45,6 +45,7 @@ class AnamClient:
         path: str,
         json: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
+        timeout: float = 30.0,
     ) -> dict[str, Any]:
         """Make an HTTP request to the Anam API."""
         async with httpx.AsyncClient() as client:
@@ -54,7 +55,7 @@ class AnamClient:
                 headers=self._get_headers(),
                 json=json,
                 params=params,
-                timeout=30.0,
+                timeout=timeout,
             )
 
             if response.status_code >= 400:
@@ -188,10 +189,12 @@ class AnamClient:
         image_url: str | None = None,
     ) -> dict[str, Any]:
         """Create a new avatar from an image URL (enterprise/pro only)."""
-        payload = {"name": name}
+        # The MCP tool exposes a generic "name" argument, while the public API
+        # expects the avatar display name under "displayName".
+        payload = {"displayName": name}
         if image_url:
             payload["imageUrl"] = image_url
-        return await self._request("POST", "/v1/avatars", json=payload)
+        return await self._request("POST", "/v1/avatars", json=payload, timeout=120.0)
 
     async def update_avatar(
         self,
@@ -201,10 +204,9 @@ class AnamClient:
     ) -> dict[str, Any]:
         """Update an avatar."""
         payload = {}
-        if name is not None:
-            payload["name"] = name
-        if display_name is not None:
-            payload["displayName"] = display_name
+        resolved_display_name = display_name if display_name is not None else name
+        if resolved_display_name is not None:
+            payload["displayName"] = resolved_display_name
         return await self._request("PUT", f"/v1/avatars/{avatar_id}", json=payload)
 
     async def delete_avatar(self, avatar_id: str) -> dict[str, Any]:
