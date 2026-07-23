@@ -165,19 +165,6 @@ Add to your project's `.mcp.json`:
 |------|-------------|
 | `generate_avatar_video` | Generate an MP4 video of an avatar speaking a script |
 
-### Meeting Avatars (Recall Integration)
-
-Add AI avatars to video meetings (Zoom, Google Meet, Microsoft Teams). Requires a [Recall AI](https://recall.ai) API key.
-
-| Tool | Description |
-|------|-------------|
-| `add_avatar_to_meeting` | Add an Anam avatar to a video meeting |
-| `get_meeting_bot_status` | Check the status of a meeting bot |
-| `remove_avatar_from_meeting` | Remove an avatar from a meeting |
-| `list_meeting_bots` | List all active meeting bots |
-
-**Configuration**: Set `RECALL_API_KEY` environment variable alongside your `ANAM_API_KEY`.
-
 ## Example Usage
 
 Once configured, you can ask Claude:
@@ -186,7 +173,6 @@ Once configured, you can ask Claude:
 - "Create a new persona named 'Sales Assistant' with a friendly personality"
 - "What avatars are available?"
 - "Generate a session token for my customer support persona"
-- "Add an avatar to my Google Meet call at meet.google.com/abc-defg-hij"
 
 ## Default IDs
 
@@ -204,8 +190,6 @@ For quick testing, you can use these default IDs:
 |----------|-------------|---------|
 | `ANAM_API_KEY` | Your Anam API key (required) | - |
 | `ANAM_API_URL` | API base URL (for staging) | `https://api.anam.ai` |
-| `RECALL_API_KEY` | Recall AI API key (for meeting avatars) | - |
-| `MEET_PAGE_URL` | Avatar meet page URL | `https://meet.anam.ai` |
 | `TEXT_TO_AVATAR_URL` | Text-to-avatar service URL (early access) | `https://anam-org--text-to-avatar-api.modal.run` |
 
 ## Documentation

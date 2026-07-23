@@ -9,7 +9,6 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 
 from .client import AnamAPIError, AnamClient
-from .recall import RecallAPIError, RecallClient
 
 # Initialize the MCP server
 mcp = FastMCP("anam")
@@ -19,7 +18,6 @@ DEFAULT_PER_PAGE = 100
 
 # Lazy-initialize the clients to allow environment variables to be set
 _client: AnamClient | None = None
-_recall_client: RecallClient | None = None
 
 
 def get_client() -> AnamClient:
@@ -28,14 +26,6 @@ def get_client() -> AnamClient:
     if _client is None:
         _client = AnamClient()
     return _client
-
-
-def get_recall_client() -> RecallClient:
-    """Get or create the Recall API client."""
-    global _recall_client
-    if _recall_client is None:
-        _recall_client = RecallClient()
-    return _recall_client
 
 
 def format_error(e: AnamAPIError) -> str:
@@ -1606,192 +1596,6 @@ async def generate_avatar_video(
         return "Error: Request timed out"
     except Exception as e:
         return f"Error: {e}"
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Recall AI - Meeting Avatars
-# ─────────────────────────────────────────────────────────────────────────────
-
-# Meet page URL - renders avatar video for Recall to use as bot camera
-MEET_PAGE_BASE_URL = os.getenv("MEET_PAGE_URL", "https://meet.anam.ai")
-
-
-def format_recall_error(e: RecallAPIError) -> str:
-    """Format a Recall API error as a user-friendly message."""
-    return f"Error: {e.message}"
-
-
-def format_bot_status(bot: dict) -> str:
-    """Format bot status as readable output."""
-    status_code = bot.get("status_changes", [{}])[-1].get("code", "unknown")
-    lines = [
-        f"Bot ID: {bot.get('id')}",
-        f"Status: {status_code}",
-        f"Meeting URL: {bot.get('meeting_url', {}).get('url', 'N/A')}",
-        f"Bot Name: {bot.get('bot_name', 'N/A')}",
-    ]
-    if bot.get("join_at"):
-        lines.append(f"Scheduled Join: {bot.get('join_at')}")
-    return "\n".join(lines)
-
-
-@mcp.tool()
-async def add_avatar_to_meeting(
-    meeting_url: str,
-    avatar_id: str,
-    voice_id: str,
-    system_prompt: str,
-    bot_name: str = "Anam Avatar",
-    llm_id: str | None = None,
-    avatar_model: str = "cara-3",
-) -> str:
-    """Add an Anam avatar to a video meeting (Zoom, Google Meet, Teams).
-
-    Creates an ephemeral session and deploys a Recall bot that shows
-    the avatar as its camera feed. The avatar can hear and respond
-    to meeting participants.
-
-    Args:
-        meeting_url: Video conference URL (e.g., https://meet.google.com/abc-defg-hij)
-        avatar_id: Anam avatar ID. Use search_avatars to find one.
-        voice_id: Anam voice ID. Use search_voices to find one.
-        system_prompt: Instructions for the avatar's personality and behavior.
-        bot_name: Name shown in the meeting participant list (default: "Anam Avatar")
-        llm_id: Optional LLM ID. Defaults to GPT-4o-mini.
-        avatar_model: Avatar model ("cara-2" or "cara-3", default: cara-3)
-
-    Returns:
-        Bot ID and status information
-    """
-    import os
-
-    # Check for Recall API key first
-    if not os.getenv("RECALL_API_KEY"):
-        return "Error: RECALL_API_KEY environment variable is required for meeting avatars"
-
-    # Step 1: Create ephemeral session token via Anam API
-    anam_client = get_client()
-    try:
-        token_result = await anam_client.create_session_token(
-            name=bot_name,
-            avatar_id=avatar_id,
-            voice_id=voice_id,
-            system_prompt=system_prompt,
-            llm_id=llm_id,
-            avatar_model=avatar_model,
-        )
-        session_token = token_result.get("sessionToken")
-        if not session_token:
-            return "Error: Failed to create session token"
-    except AnamAPIError as e:
-        return f"Error creating session: {format_error(e)}"
-
-    # Step 2: Build meet page URL with token
-    meet_page_url = f"{MEET_PAGE_BASE_URL}/?token={session_token}"
-
-    # Step 3: Create Recall bot
-    try:
-        recall_client = get_recall_client()
-        bot = await recall_client.create_bot(
-            meeting_url=meeting_url,
-            output_media_url=meet_page_url,
-            bot_name=bot_name,
-        )
-
-        bot_id = bot.get("id")
-        return (
-            f"Avatar joining meeting!\n\n"
-            f"Bot ID: {bot_id}\n"
-            f"Meeting: {meeting_url}\n"
-            f"Bot Name: {bot_name}\n\n"
-            f"Use get_meeting_bot_status('{bot_id}') to check status.\n"
-            f"Use remove_avatar_from_meeting('{bot_id}') to leave."
-        )
-    except RecallAPIError as e:
-        return format_recall_error(e)
-
-
-@mcp.tool()
-async def get_meeting_bot_status(bot_id: str) -> str:
-    """Check the status of a Recall meeting bot.
-
-    Args:
-        bot_id: The Recall bot ID returned by add_avatar_to_meeting
-
-    Returns:
-        Bot status including meeting URL, join status, etc.
-    """
-    import os
-
-    if not os.getenv("RECALL_API_KEY"):
-        return "Error: RECALL_API_KEY environment variable is required"
-
-    try:
-        recall_client = get_recall_client()
-        bot = await recall_client.get_bot(bot_id)
-        return format_bot_status(bot)
-    except RecallAPIError as e:
-        return format_recall_error(e)
-
-
-@mcp.tool()
-async def remove_avatar_from_meeting(bot_id: str) -> str:
-    """Remove an avatar from a video meeting.
-
-    Makes the Recall bot leave the meeting gracefully.
-
-    Args:
-        bot_id: The Recall bot ID returned by add_avatar_to_meeting
-    """
-    import os
-
-    if not os.getenv("RECALL_API_KEY"):
-        return "Error: RECALL_API_KEY environment variable is required"
-
-    try:
-        recall_client = get_recall_client()
-        await recall_client.leave_meeting(bot_id)
-        return f"Avatar left the meeting (bot: {bot_id})"
-    except RecallAPIError as e:
-        return format_recall_error(e)
-
-
-@mcp.tool()
-async def list_meeting_bots(limit: int = 20) -> str:
-    """List all Recall meeting bots.
-
-    Shows recent bots including their status and meeting URLs.
-
-    Args:
-        limit: Maximum number of bots to return (default: 20)
-    """
-    import os
-
-    if not os.getenv("RECALL_API_KEY"):
-        return "Error: RECALL_API_KEY environment variable is required"
-
-    try:
-        recall_client = get_recall_client()
-        result = await recall_client.list_bots(limit=limit)
-
-        bots = result.get("results", [])
-        if not bots:
-            return "No meeting bots found."
-
-        lines = [f"Meeting Bots ({len(bots)}):\n"]
-        lines.append(f"{'Status':<15} {'Bot Name':<20} {'ID'}")
-        lines.append("-" * 75)
-
-        for bot in bots:
-            status_changes = bot.get("status_changes", [])
-            status = status_changes[-1].get("code", "unknown")[:14] if status_changes else "unknown"
-            name = bot.get("bot_name", "unnamed")[:19]
-            bot_id = bot.get("id", "")
-            lines.append(f"{status:<15} {name:<20} {bot_id}")
-
-        return "\n".join(lines)
-    except RecallAPIError as e:
-        return format_recall_error(e)
 
 
 def main():
