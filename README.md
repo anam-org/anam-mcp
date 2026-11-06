@@ -155,15 +155,18 @@ pronunciation dictionaries, integration guides and docs search. The
 
 ## Legacy: running `anam-mcp` locally
 
-This package still installs and runs against the Anam API, but it gets no new
-tools or fixes. Its last release is 0.1.13.
+This package gets no new tools or fixes. Its last release is 0.1.13.
+
+It needs version 1 of the `mcp` Python package. A fresh install now picks up
+`mcp` 2.x, and the server then fails on startup with
+`No module named 'mcp.server.fastmcp'`. Pin `mcp<2` to keep it running:
 
 ```json
 {
   "mcpServers": {
     "anam": {
       "command": "uvx",
-      "args": ["anam-mcp"],
+      "args": ["--with", "mcp<2", "anam-mcp"],
       "env": {
         "ANAM_API_KEY": "<your-api-key>"
       }
