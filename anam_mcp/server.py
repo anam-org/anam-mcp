@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
@@ -11,8 +12,13 @@ from mcp.server.fastmcp import FastMCP
 from .client import AnamAPIError, AnamClient
 from .recall import RecallAPIError, RecallClient
 
-# Initialize the MCP server
-mcp = FastMCP("anam")
+MOVED_NOTICE = (
+    "anam-mcp is no longer maintained. Use the hosted Anam MCP server instead: "
+    "https://lab.anam.ai/mcp (setup: https://anam.ai/docs/resources/mcp)."
+)
+
+# Initialize the MCP server. The instructions let the model tell the user.
+mcp = FastMCP("anam", instructions=MOVED_NOTICE)
 
 # Default pagination size
 DEFAULT_PER_PAGE = 100
@@ -1796,6 +1802,8 @@ async def list_meeting_bots(limit: int = 20) -> str:
 
 def main():
     """Run the Anam MCP server."""
+    # stdout carries the stdio protocol, so the notice goes to stderr.
+    print(MOVED_NOTICE, file=sys.stderr)
     mcp.run()
 
 
