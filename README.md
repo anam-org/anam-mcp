@@ -1,52 +1,172 @@
 # Anam MCP Server
 
-Official MCP (Model Context Protocol) server for [Anam AI](https://anam.ai) - manage AI personas, avatars, voices, and sessions directly from Claude or any MCP client.
+> [!IMPORTANT]
+> **This server has moved.** Anam now hosts its MCP server at
+> **`https://lab.anam.ai/mcp`**. There's nothing to install: you sign in with
+> your Anam account over OAuth instead of pasting an API key, and new tools
+> arrive without an update.
+>
+> This Python package (`anam-mcp` on PyPI) is no longer maintained. Switch to
+> the hosted server using the steps below, or follow the
+> [setup guide](https://lab.anam.ai/mcp) and the
+> [docs](https://anam.ai/docs/resources/mcp).
 
-## Installation
+## Connect to the hosted server
 
-### Using uvx (recommended)
+Server URL:
 
-```bash
-uvx anam-mcp
+```text
+https://lab.anam.ai/mcp
 ```
 
-### Using pip
+The first time you connect, your app opens Anam in a browser. Sign in, choose
+one organization, and choose **Full access** or **Read only**.
 
-```bash
-pip install anam-mcp
-```
+### Claude (claude.ai and Claude Desktop)
 
-## Configuration
+1. Open **Settings**, then **Connectors**, and choose **Add custom connector**.
+2. Name it Anam, paste `https://lab.anam.ai/mcp` and add it.
+3. Choose **Connect** and sign in to Anam.
 
-### Claude Desktop
+On Team and Enterprise plans, an owner adds the connector in the
+organization's settings first.
 
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+### ChatGPT
 
-```json
-{
-  "mcpServers": {
-    "anam": {
-      "command": "uvx",
-      "args": ["anam-mcp"],
-      "env": {
-        "ANAM_API_KEY": "<your-api-key>"
-      }
-    }
-  }
-}
-```
+1. Open **Plugins**, choose the plus button, then **Add custom MCP server**.
+2. Name it Anam, paste `https://lab.anam.ai/mcp` and choose **OAuth**.
+3. Accept the warning, choose **Create as a plugin** and sign in to Anam.
 
 ### Claude Code
 
-Add to your project's `.mcp.json`:
+```bash
+claude mcp add --transport http --scope user anam https://lab.anam.ai/mcp
+claude mcp login anam
+```
+
+### Cursor
+
+Add Anam to `~/.cursor/mcp.json`, or to `.cursor/mcp.json` in a project:
 
 ```json
 {
   "mcpServers": {
     "anam": {
-      "type": "stdio",
+      "url": "https://lab.anam.ai/mcp"
+    }
+  }
+}
+```
+
+Cursor asks you to sign in to Anam when it first connects.
+
+### VS Code
+
+```bash
+code --add-mcp '{"name":"anam","type":"http","url":"https://lab.anam.ai/mcp"}'
+```
+
+### Codex
+
+```bash
+codex mcp add anam --url https://lab.anam.ai/mcp
+codex mcp login anam
+```
+
+### Other clients
+
+Add `https://lab.anam.ai/mcp` as a remote MCP server (Streamable HTTP). Sign-in
+is OAuth 2.1 with PKCE; clients register themselves. See the
+[setup guide](https://lab.anam.ai/mcp) for details.
+
+### Agents without a browser: API keys
+
+Your Anam API key still works. Send it as a Bearer token instead of signing in:
+
+```json
+{
+  "mcpServers": {
+    "anam": {
+      "url": "https://lab.anam.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer <your Anam API key>"
+      }
+    }
+  }
+}
+```
+
+```bash
+# Claude Code
+claude mcp add --transport http anam https://lab.anam.ai/mcp \
+  --header "Authorization: Bearer $ANAM_API_KEY"
+
+# Codex
+codex mcp add anam --url https://lab.anam.ai/mcp --bearer-token-env-var ANAM_API_KEY
+```
+
+Create and revoke keys on the [API keys page](https://lab.anam.ai/api-keys).
+
+### Per-client paths
+
+`https://lab.anam.ai/mcp` serves every tool, so use it everywhere unless a
+directory listing tells you otherwise. The paths `/mcp/claude`,
+`/mcp/chatgpt`, `/mcp/copilot`, `/mcp/gemini`, `/mcp/agentforce` and
+`/mcp/muse` serve the smaller tool sets made for those platforms' directory
+listings.
+
+## What changes when you switch
+
+- **Sign-in:** OAuth with your Anam account replaces `ANAM_API_KEY`. API keys
+  still work as a Bearer token.
+- **No local install:** you no longer need Python, `uv` or `uvx`.
+- **Meetings:** inviting a persona to Google Meet, Zoom or Microsoft Teams no
+  longer needs a Recall AI key.
+- **Tool names:** every tool now starts with `anam_`. See the table below.
+
+| `anam-mcp` tool | Hosted server tool |
+| --- | --- |
+| `list_personas`, `get_persona`, `create_persona`, `update_persona`, `delete_persona` | `anam_persona_list`, `anam_persona_get`, `anam_persona_create`, `anam_persona_update`, `anam_persona_delete` |
+| `list_avatars`, `get_avatar`, `create_avatar`, `update_avatar`, `delete_avatar` | `anam_avatar_list`, `anam_avatar_get`, `anam_avatar_create`, `anam_avatar_update`, `anam_avatar_delete` |
+| `search_avatars` | `anam_avatar_list` with `search` |
+| `list_voices`, `get_voice`, `update_voice`, `delete_voice` | `anam_voice_list`, `anam_voice_get`, `anam_voice_update`, `anam_voice_delete` |
+| `search_voices` | `anam_voice_list` with `search`, `gender` or `country` |
+| `create_voice` | `anam_voice_import` (a provider voice ID) or `anam_voice_clone` (a recording) |
+| `list_tools`, `get_tool`, `update_tool`, `delete_tool` | `anam_tool_list`, `anam_tool_get`, `anam_tool_update`, `anam_tool_delete` |
+| `create_webhook_tool`, `create_knowledge_tool` | `anam_tool_create`; for knowledge, `anam_persona_knowledge_add` |
+| `create_session_token` | `anam_session_token_create` |
+| `list_sessions`, `get_session`, `get_session_recording` | `anam_session_list`, `anam_session_get`, `anam_session_recording_get` |
+| `list_knowledge_folders`, `create_knowledge_folder` | `anam_knowledge_folder_list`, `anam_knowledge_folder_create` |
+| `get_knowledge_group`, `update_knowledge_group`, `delete_knowledge_group`, `search_knowledge_group` | `anam_knowledge_folder_get`, `anam_knowledge_folder_update`, `anam_knowledge_folder_delete`, `anam_knowledge_folder_search` |
+| `list_knowledge_documents`, `get_knowledge_document`, `update_knowledge_document`, `delete_knowledge_document` | `anam_knowledge_document_list`, `anam_knowledge_document_get`, `anam_knowledge_document_update`, `anam_knowledge_document_delete` |
+| `get_knowledge_document_download` | `anam_knowledge_document_download` |
+| `upload_knowledge_document` | `anam_knowledge_document_create_from_text` or `anam_knowledge_document_create_from_url` |
+| `list_llms`, `get_llm`, `create_llm`, `update_llm`, `delete_llm` | `anam_llm_list`, `anam_llm_get`, `anam_llm_create`, `anam_llm_update`, `anam_llm_delete` |
+| `list_share_links`, `get_share_link`, `create_share_link`, `update_share_link`, `delete_share_link` | `anam_share_link_list`, `anam_share_link_get`, `anam_share_link_create`, `anam_share_link_update`, `anam_share_link_delete` |
+| `generate_avatar_video` | `anam_avatar_video_create`, then `anam_avatar_video_get` until it's ready |
+| `add_avatar_to_meeting` | `anam_meeting_invite_create` |
+| `get_meeting_bot_status`, `list_meeting_bots` | `anam_meeting_invite_get`, `anam_meeting_invite_list` |
+| `remove_avatar_from_meeting` | `anam_meeting_invite_cancel` (cancels an invite before the persona joins) |
+
+The hosted server also adds tools this package never had, such as
+`anam_quickstart`, `anam_persona_from_brief`, session transcripts and search,
+pronunciation dictionaries, integration guides and docs search. The
+[docs](https://anam.ai/docs/resources/mcp#tools) list them all.
+
+## Legacy: running `anam-mcp` locally
+
+This package gets no new tools or fixes. Its last release is 0.1.13.
+
+It needs version 1 of the `mcp` Python package. A fresh install now picks up
+`mcp` 2.x, and the server then fails on startup with
+`No module named 'mcp.server.fastmcp'`. Pin `mcp<2` to keep it running:
+
+```json
+{
+  "mcpServers": {
+    "anam": {
       "command": "uvx",
-      "args": ["anam-mcp"],
+      "args": ["--with", "mcp<2", "anam-mcp"],
       "env": {
         "ANAM_API_KEY": "<your-api-key>"
       }
@@ -55,166 +175,17 @@ Add to your project's `.mcp.json`:
 }
 ```
 
-## Getting Your API Key
-
-1. Sign up at [Anam Lab](https://lab.anam.ai)
-2. Navigate to the [API Keys page](https://lab.anam.ai/api-keys)
-3. Click "Create API key" and save it securely
-
-## Available Tools
-
-### Persona Management
-
-| Tool | Description |
-|------|-------------|
-| `list_personas` | List all personas in your account |
-| `get_persona` | Get details of a specific persona |
-| `create_persona` | Create a new persona with avatar, voice, and personality |
-| `update_persona` | Update an existing persona |
-| `delete_persona` | Delete a persona |
-
-### Avatar Management
-
-| Tool | Description |
-|------|-------------|
-| `list_avatars` | List all available avatars |
-| `search_avatars` | Search avatars by name or description |
-| `get_avatar` | Get details of a specific avatar |
-| `create_avatar` | Create custom avatar from image (enterprise/pro) |
-| `update_avatar` | Update an avatar's metadata |
-| `delete_avatar` | Delete a custom avatar |
-
-### Voice Management
-
-| Tool | Description |
-|------|-------------|
-| `list_voices` | List all available voices (400+ in 50+ languages) |
-| `search_voices` | Search voices by name, language, or gender |
-| `get_voice` | Get details of a specific voice |
-| `create_voice` | Create a custom voice |
-| `update_voice` | Update a voice's metadata |
-| `delete_voice` | Delete a custom voice |
-
-### Tool Management
-
-| Tool | Description |
-|------|-------------|
-| `list_tools` | List all tools in your organization |
-| `get_tool` | Get details of a specific tool |
-| `create_webhook_tool` | Create a webhook tool for API integrations |
-| `create_knowledge_tool` | Create a knowledge/RAG tool |
-| `update_tool` | Update a tool's configuration |
-| `delete_tool` | Delete a tool |
-
-### Session Management
-
-| Tool | Description |
-|------|-------------|
-| `create_session_token` | Generate a session token for the client SDK |
-| `list_sessions` | List all sessions with optional filters |
-| `get_session` | Get details of a specific session |
-| `get_session_recording` | Download a session recording |
-
-### Knowledge Folders
-
-| Tool | Description |
-|------|-------------|
-| `list_knowledge_folders` | List knowledge folders |
-| `get_knowledge_folder` | Get details of a specific folder |
-| `create_knowledge_folder` | Create a new folder for documents |
-| `update_knowledge_folder` | Update a folder's metadata |
-| `delete_knowledge_folder` | Delete a knowledge folder |
-| `search_knowledge_folder` | Search within a knowledge folder |
-
-### Knowledge Documents
-
-| Tool | Description |
-|------|-------------|
-| `list_knowledge_documents` | List documents in a folder |
-| `get_knowledge_document` | Get details of a specific document |
-| `upload_knowledge_document` | Upload a document to a folder |
-| `update_knowledge_document` | Update document metadata |
-| `delete_knowledge_document` | Delete a document |
-| `get_knowledge_document_download` | Download a document |
-
-### LLM Management
-
-| Tool | Description |
-|------|-------------|
-| `list_llms` | List all LLM configurations |
-| `get_llm` | Get details of a specific LLM |
-| `create_llm` | Create a new LLM configuration |
-| `update_llm` | Update an LLM configuration |
-| `delete_llm` | Delete an LLM configuration |
-
-### Share Links
-
-| Tool | Description |
-|------|-------------|
-| `list_share_links` | List all share links |
-| `get_share_link` | Get details of a specific share link |
-| `create_share_link` | Create a share link for a persona |
-| `update_share_link` | Update a share link |
-| `delete_share_link` | Delete a share link |
-
-### Text-to-Avatar (Early Access)
-
-> **Internal Testing** - This feature is in early access. Contact [support@anam.ai](mailto:support@anam.ai) for access.
-
-| Tool | Description |
-|------|-------------|
-| `generate_avatar_video` | Generate an MP4 video of an avatar speaking a script |
-
-### Meeting Avatars (Recall Integration)
-
-Add AI avatars to video meetings (Zoom, Google Meet, Microsoft Teams). Requires a [Recall AI](https://recall.ai) API key.
-
-| Tool | Description |
-|------|-------------|
-| `add_avatar_to_meeting` | Add an Anam avatar to a video meeting |
-| `get_meeting_bot_status` | Check the status of a meeting bot |
-| `remove_avatar_from_meeting` | Remove an avatar from a meeting |
-| `list_meeting_bots` | List all active meeting bots |
-
-**Configuration**: Set `RECALL_API_KEY` environment variable alongside your `ANAM_API_KEY`.
-
-## Example Usage
-
-Once configured, you can ask Claude:
-
-- "List all my Anam personas"
-- "Create a new persona named 'Sales Assistant' with a friendly personality"
-- "What avatars are available?"
-- "Generate a session token for my customer support persona"
-- "Add an avatar to my Google Meet call at meet.google.com/abc-defg-hij"
-
-## Default IDs
-
-For quick testing, you can use these default IDs:
-
-| Resource | ID |
-|----------|-----|
-| Avatar (Cara) | `30fa96d0-26c4-4e55-94a0-517025942e18` |
-| Voice (Cara) | `6bfbe25a-979d-40f3-a92b-5394170af54b` |
-| Default LLM | `0934d97d-0c3a-4f33-91b0-5e136a0ef466` |
-
-## Environment Variables
-
 | Variable | Description | Default |
-|----------|-------------|---------|
+| --- | --- | --- |
 | `ANAM_API_KEY` | Your Anam API key (required) | - |
-| `ANAM_API_URL` | API base URL (for staging) | `https://api.anam.ai` |
-| `RECALL_API_KEY` | Recall AI API key (for meeting avatars) | - |
+| `ANAM_API_URL` | API base URL | `https://api.anam.ai` |
+| `RECALL_API_KEY` | Recall AI API key, for the meeting tools | - |
 | `MEET_PAGE_URL` | Avatar meet page URL | `https://meet.anam.ai` |
-| `TEXT_TO_AVATAR_URL` | Text-to-avatar service URL (early access) | `https://anam-org--text-to-avatar-api.modal.run` |
+| `TEXT_TO_AVATAR_URL` | Text-to-avatar service URL | `https://anam-org--text-to-avatar-api.modal.run` |
 
-## Documentation
-
-- [Anam Developer Docs](https://docs.anam.ai)
-- [API Reference](https://docs.anam.ai/api-reference)
-- [Avatar Gallery](https://docs.anam.ai/resources/avatar-gallery)
-- [Voice Gallery](https://docs.anam.ai/resources/voice-gallery)
+The previous README, with the full list of this package's tools, is in this
+repository's history.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE).

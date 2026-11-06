@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "anam-mcp"
-version = "0.1.13"
-description = "Official Anam AI MCP server for managing AI personas"
+version = "0.1.14"
+description = "Deprecated: Anam's MCP server is now hosted at https://lab.anam.ai/mcp"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
@@ -14,7 +14,7 @@ authors = [
 ]
 keywords = ["mcp", "anam", "ai", "avatar", "persona", "digital-human"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 7 - Inactive",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -23,7 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "mcp>=1.0.0",
+    "mcp>=1.0.0,<2",
     "httpx>=0.27.0",
     "pydantic>=2.0.0",
 ]
@@ -38,8 +38,8 @@ dev = [
 anam-mcp = "anam_mcp.server:main"
 
 [project.urls]
-Homepage = "https://github.com/anam-org/anam-mcp"
-Documentation = "https://docs.anam.ai"
+Homepage = "https://lab.anam.ai/mcp"
+Documentation = "https://anam.ai/docs/resources/mcp"
 Repository = "https://github.com/anam-org/anam-mcp"
 Issues = "https://github.com/anam-org/anam-mcp/issues"
 
